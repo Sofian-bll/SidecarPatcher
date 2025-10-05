@@ -5,6 +5,14 @@ minimaliste au framework macOS **SidecarCore** afin de désactiver la vérificat
 compatibilité côté appareil. Le projet a été nettoyé pour ne contenir que le code
 nécessaire au patch, sans binaires compilés ni artefacts temporaires.
 
+> ⚠️ **Avertissement légal**
+>
+> Ce projet est fourni uniquement à des fins éducatives et expérimentales.
+> Il ne contient aucun fichier propriétaire d’Apple.
+> L'utilisation de ce script pour modifier un composant de macOS peut enfreindre la
+> licence d'utilisation d'Apple ou des lois locales (ex. DMCA §1201).
+> Vous êtes seul responsable de l'usage que vous en faites.
+
 ## Fonctionnalités
 
 - Recherche automatique de la signature machine de la fonction
