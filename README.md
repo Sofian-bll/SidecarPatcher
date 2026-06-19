@@ -1,45 +1,44 @@
-# SidecarPatcher
+> [Lire en Francais](README.md) | [Read in English](README.en.md)
 
-SidecarPatcher est un utilitaire en ligne de commande qui applique un patch binaire
-minimaliste au framework macOS **SidecarCore** afin de désactiver la vérification de
-compatibilité côté appareil. Le projet a été nettoyé pour ne contenir que le code
-nécessaire au patch, sans binaires compilés ni artefacts temporaires.
+<p align="center">
+  <img src="assets/logo.svg" alt="SidecarPatcher logo" width="160"/>
+</p>
 
-## Fonctionnalités
+<h1 align="center" id="readme-top">SidecarPatcher</h1>
 
-- Recherche automatique de la signature machine de la fonction
-  `SidecarDisplayIsSupportedReceivingDevice`.
-- Application d'un patch `MOV EAX, 1; RET` et remplissage optionnel avec des NOP.
-- Sauvegarde automatique du fichier original avant modification.
-- Possibilité de forcer un offset ou un nombre de NOP personnalisé.
+<p align="center">
+  Prototype experimental de reactivation de Sidecar sur Mac et iPad non supportes.
+</p>
 
-## Installation
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat" alt="License"/>
+  <img src="https://img.shields.io/badge/Python-3-blue?style=flat&logo=python" alt="Python"/>
+  <img src="https://img.shields.io/badge/macOS-Sequoia-000000?style=flat&logo=apple" alt="macOS"/>
+</p>
 
-Le script ne dépend d'aucune bibliothèque externe. Il suffit de disposer d'une
-installation Python 3.9 ou plus récente.
+---
 
-## Utilisation
+## C'est quoi ?
 
-```bash
-python sidecar_patcher.py /chemin/vers/SidecarCore -o SidecarCore.patched
-```
+SidecarPatcher est une tentative de reactiver la fonction Sidecar sur du materiel Apple trop ancien pour etre officiellement pris en charge. Le script Python repere et modifie la fonction de verification de compatibilite dans le binaire `SidecarCore`, mais la signature du binaire modifie reste non resolue — le projet est un prototype, pas une solution cle en main.
 
-Options disponibles :
+## Etat actuel
 
-- `-o/--output PATH` : chemin du fichier patché (par défaut `SidecarCore.patched`).
-- `--no-backup` : n'enregistre pas de sauvegarde lorsque le patch est appliqué en place.
-- `--force-offset OFFSET` : offset du patch (en décimal ou hexadécimal `0x...`).
-- `--nop-count N` : nombre de NOP à insérer après le patch (par défaut 10).
+- ✅ Extraction du binaire `SidecarCore`
+- ✅ Identification de la fonction de compatibilite via Hopper
+- ❌ Signature du binaire modifie
 
-## Restaurer un binaire sauvegardé
+Pour une solution fonctionnelle, voir [FeatureUnlock](https://github.com/acidanthera/FeatureUnlock) ou [free-sidecar](https://github.com/ben-z/free-sidecar).
 
-Si vous patchez le binaire sur place, une sauvegarde `SidecarCore.bak` est créée.
-Pour la restaurer :
+## Structure
 
-```bash
-cp SidecarCore.bak SidecarCore
-```
+| Fichier/Dossier | Description |
+|-----------------|-------------|
+| `sidecar_patcher.py` | Script de patch principal |
+| `docs/RECHERCHE.md` | Journal de recherche et explications techniques |
+| `docs/INSTALLATION.md` | Guide et prerequis |
+| `docs/COMMANDES.md` | Aide-memoire des commandes |
 
 ## Licence
 
-Ce projet est distribué sous licence MIT. Consultez le fichier `LICENSE` si disponible.
+MIT © 2026 Sofian — voir [LICENSE](LICENSE).
