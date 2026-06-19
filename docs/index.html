@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SidecarPatcher — Re-enable Sidecar</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #39d353;
+    --red: #f85149;
+    --border: #30363d;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  .container { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+
+  header {
+    padding: 72px 0 48px;
+    text-align: center;
+  }
+  .header-logo {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 420px;
+    margin: 0 auto 20px;
+  }
+  .badges {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .badge.hl { color: var(--accent); border-color: var(--accent); }
+  .badge.warn { color: var(--red); border-color: var(--red); }
+
+  section { padding: 40px 0; }
+  section + section { border-top: 1px solid var(--border); }
+
+  h2 {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+  h2::before { content: '# '; color: var(--muted); }
+
+  .code-window {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0 0 32px;
+  }
+  .code-bar {
+    padding: 8px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .code-bar span { width: 10px; height: 10px; border-radius: 50%; }
+  .code-bar span:nth-child(1) { background: #ff5f56; }
+  .code-bar span:nth-child(2) { background: #ffbd2e; }
+  .code-bar span:nth-child(3) { background: #27c93f; }
+  .code-bar .filename {
+    margin-left: 12px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: monospace;
+  }
+  .code-body {
+    padding: 16px 18px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .code-body .kw { color: #f97583; }
+  .code-body .num { color: #79c0ff; }
+  .code-body .comment { color: #8b949e; }
+  .code-body .str { color: #a5d6ff; }
+  .code-body .hex { color: var(--accent); }
+  .code-body .op { color: #ff7b72; }
+  .code-body .fn { color: #d2a8ff; }
+
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: monospace;
+  }
+  .status-card .check { color: var(--accent); }
+  .status-card .cross { color: var(--red); }
+  .status-card .label { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+
+  .struct-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .struct-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .struct-table td:first-child {
+    font-family: monospace;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .struct-table td:last-child { color: var(--muted); }
+
+  footer {
+    text-align: center;
+    padding: 40px 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header class="container">
+  <img src="../assets/logo.svg" alt="SidecarPatcher" class="header-logo"/>
+  <h1>SidecarPatcher</h1>
+  <p class="subtitle">Experimental macOS internals hack — patch SidecarCore to re-enable Sidecar on unsupported hardware.</p>
+  <div class="badges">
+    <span class="badge hl">MIT</span>
+    <span class="badge">Python 3</span>
+    <span class="badge">macOS Sequoia</span>
+    <span class="badge warn">Prototype</span>
+  </div>
+</header>
+
+<div class="container">
+  <div class="code-window">
+    <div class="code-bar">
+      <span></span><span></span><span></span>
+      <span class="filename">sidecar_patcher.py</span>
+    </div>
+    <div class="code-body">
+      <span class="comment"># Byte signature of the compatibility check function</span><br/>
+      <span class="kw">SIGNATURE</span> = <span class="fn">bytes</span>([<br/>
+      &nbsp;&nbsp;<span class="hex">0x55</span>, <span class="hex">0x48</span>, <span class="hex">0x89</span>, <span class="hex">0xE5</span>, <span class="hex">0x41</span>, <span class="hex">0x57</span>, <span class="hex">0x41</span>, <span class="hex">0x56</span>,<br/>
+      &nbsp;&nbsp;<span class="hex">0x41</span>, <span class="hex">0x55</span>, <span class="hex">0x41</span>, <span class="hex">0x54</span>, <span class="hex">0x53</span>, <span class="hex">0x48</span>, <span class="hex">0x83</span>, <span class="hex">0xEC</span>,<br/>
+      &nbsp;&nbsp;<span class="hex">0x38</span>, <span class="comment"># ...</span><br/>
+      ])<br/><br/>
+      <span class="comment"># Found at 0x10003e7f0 in SidecarCore (Sequoia 15.6)</span><br/>
+      <span class="comment"># Patched to always return 1 (compatible)</span>
+    </div>
+  </div>
+</div>
+
+<section class="container">
+  <h2>Status</h2>
+  <div class="status-grid">
+    <div class="status-card">
+      <span class="check">&check;</span> Binary extraction<br/>
+      <div class="label">SidecarCore from DYLD cache</div>
+    </div>
+    <div class="status-card">
+      <span class="check">&check;</span> Function identified<br/>
+      <div class="label">Via Hopper disassembler</div>
+    </div>
+    <div class="status-card">
+      <span class="cross">&cross;</span> Code signing<br/>
+      <div class="label">Modified binary signature unresolved</div>
+    </div>
+  </div>
+  <p style="color:var(--muted);font-size:0.85rem;margin-top:16px;">For a working solution, see <a href="https://github.com/acidanthera/FeatureUnlock">FeatureUnlock</a> or <a href="https://github.com/ben-z/free-sidecar">free-sidecar</a>.</p>
+</section>
+
+<section class="container">
+  <h2>Structure</h2>
+  <table class="struct-table">
+    <tr><td>sidecar_patcher.py</td><td>Main patching script</td></tr>
+    <tr><td>docs/RECHERCHE.md</td><td>Research journal &amp; technical deep dive</td></tr>
+    <tr><td>docs/INSTALLATION.md</td><td>Setup guide &amp; prerequisites</td></tr>
+    <tr><td>docs/COMMANDES.md</td><td>Command reference</td></tr>
+  </table>
+</section>
+
+<footer>
+  <p>MIT &copy; 2026 Sofian &middot; <a href="https://github.com/Sofian-bll/SidecarPatcher">GitHub</a></p>
+</footer>
+
+</body>
+</html>
