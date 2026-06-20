@@ -1,224 +1,616 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" class="scroll-smooth">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SidecarPatcher — Re-enable Sidecar</title>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SidecarPatcher</title>
+<meta name="description" content="Prototype experimental de reactivation de Sidecar sur Mac et iPad non supportes.">
+<meta name="theme-color" content="#0a0b10">
+<meta property="og:title" content="SidecarPatcher">
+<meta property="og:description" content="Prototype experimental de reactivation de Sidecar sur Mac et iPad non supportes.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SidecarPatcher">
+<meta name="twitter:description" content="Prototype experimental de reactivation de Sidecar sur Mac et iPad non supportes.">
+<meta name="twitter:image" content="assets/logo.png">
+<link rel="icon" type="image/png" href="assets/logo.png">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: {
+    colors: {
+      bg: 'var(--bg)',
+      surface: 'var(--surface)',
+      elevated: 'var(--elevated)',
+      border: 'var(--border)',
+      text: 'var(--text)',
+      muted: 'var(--muted)',
+      primary: 'var(--primary)',
+      secondary: 'var(--secondary)',
+      accent: 'var(--accent)'
+    },
+    maxWidth: {
+      'container': 'var(--container-max)',
+      'container-sm': 'var(--container-sm)',
+    },
+    animation: {
+      'blob': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      'float': 'float 6s ease-in-out infinite',
+    },
+    keyframes: {
+      float: {
+        '0%, 100%': { transform: 'translateY(0)' },
+        '50%': { transform: 'translateY(-10px)' },
+      }
+    }
+  }}
+}
+</script>
+
 <style>
-  :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --accent: #39d353;
-    --red: #f85149;
-    --border: #30363d;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-  }
-  a { color: var(--accent); text-decoration: none; }
-  .container { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+/* ===========================================================================
+   MASTER CONFIGURATION - MODERN PORTFOLIO TEMPLATE
+   =========================================================================== */
+:root {
+  /* Layout */
+  --container-max: 1152px;
+  --container-sm: 800px;
+  --radius: 16px;
+  --section-py: 6rem;
 
-  header {
-    padding: 72px 0 48px;
-    text-align: center;
-  }
-  .header-logo {
-    width: 88px;
-    height: 88px;
-    margin-bottom: 20px;
-  }
-  h1 {
-    font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
-    font-size: 2.4rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .subtitle {
-    font-size: 1rem;
-    color: var(--muted);
-    max-width: 420px;
-    margin: 0 auto 20px;
-  }
-  .badges {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .badge {
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-  .badge.hl { color: var(--accent); border-color: var(--accent); }
-  .badge.warn { color: var(--red); border-color: var(--red); }
+  /* Dark theme */
+  --bg: #0a0b10;
+  --surface: #111318;
+  --elevated: #181b24;
+  --border: #2a2d3a;
+  --text: #f0f4ff;
+  --muted: rgba(240,244,255,0.55);
 
-  section { padding: 40px 0; }
-  section + section { border-top: 1px solid var(--border); }
+  /* Accents */
+  --primary: #3776ab;
+  --secondary: #ff6b6b;
+  --accent: #78c850;
 
-  h2 {
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 1.2rem;
-    margin-bottom: 16px;
-    color: var(--accent);
-  }
-  h2::before { content: '# '; color: var(--muted); }
+  --primary-dim: color-mix(in srgb, var(--primary) 20%, transparent);
+  --primary-dimmer: color-mix(in srgb, var(--primary) 5%, transparent);
+  --primary-glow: color-mix(in srgb, var(--primary) 40%, transparent);
 
-  .code-window {
-    background: #0a0c10;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 0 0 32px;
-  }
-  .code-bar {
-    padding: 8px 14px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-  .code-bar span { width: 10px; height: 10px; border-radius: 50%; }
-  .code-bar span:nth-child(1) { background: #ff5f56; }
-  .code-bar span:nth-child(2) { background: #ffbd2e; }
-  .code-bar span:nth-child(3) { background: #27c93f; }
-  .code-bar .filename {
-    margin-left: 12px;
-    font-size: 0.72rem;
-    color: var(--muted);
-    font-family: monospace;
-  }
-  .code-body {
-    padding: 16px 18px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 0.8rem;
-    line-height: 1.7;
-    overflow-x: auto;
-  }
-  .code-body .kw { color: #f97583; }
-  .code-body .num { color: #79c0ff; }
-  .code-body .comment { color: #8b949e; }
-  .code-body .str { color: #a5d6ff; }
-  .code-body .hex { color: var(--accent); }
-  .code-body .op { color: #ff7b72; }
-  .code-body .fn { color: #d2a8ff; }
+  /* Typography */
+  --font-display: "Sora", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-mono: "Fira Code", "SF Mono", Consolas, monospace;
 
-  .status-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-  }
-  .status-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    font-family: monospace;
-  }
-  .status-card .check { color: var(--accent); }
-  .status-card .cross { color: var(--red); }
-  .status-card .label { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  /* Light theme */
+  --light-bg: #f8f9fc;
+  --light-surface: #ffffff;
+  --light-elevated: #f0f2f8;
+  --light-border: #d8dce6;
+  --light-text: #1a1c26;
+  --light-muted: rgba(26,28,38,0.55);
 
-  .struct-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-  }
-  .struct-table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .struct-table td:first-child {
-    font-family: monospace;
-    color: var(--accent);
-    white-space: nowrap;
-  }
-  .struct-table td:last-child { color: var(--muted); }
+  /* Effects */
+  --glass-blur: 16px;
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 30px -8px rgba(0,0,0,0.2);
 
-  footer {
-    text-align: center;
-    padding: 40px 0;
-    font-size: 0.78rem;
-    color: var(--muted);
-    border-top: 1px solid var(--border);
-  }
+  --grid-size: 40px;
+  --grid-opacity: 0.12;
+}
+
+.light {
+  --bg: var(--light-bg);
+  --surface: var(--light-surface);
+  --elevated: var(--light-elevated);
+  --border: var(--light-border);
+  --text: var(--light-text);
+  --muted: var(--light-muted);
+
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 4px 30px -8px rgba(0,0,0,0.05);
+  --grid-opacity: 0.4;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.headline {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+code, pre { font-family: var(--font-mono); }
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 32px -8px var(--primary-dim);
+}
+
+.text-gradient {
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  overflow: visible;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+  padding-right: 0.03em;
+  margin-right: -0.03em;
+  background-image: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent), var(--primary));
+  background-size: 300% 300%;
+  animation: gradient-flow 8s ease infinite;
+}
+
+@keyframes gradient-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+a:active, button:active { transform: scale(0.97); transition: transform 0.1s ease; }
+
+.bg-grid {
+  background-size: var(--grid-size) var(--grid-size);
+  background-image: linear-gradient(to right, var(--border) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+  opacity: var(--grid-opacity);
+}
+
+.radial-1 { background: radial-gradient(ellipse 80% 60% at 20% 0%, rgba(55,118,171,0.10) 0%, transparent 60%); opacity: 0.5; }
+.radial-2 { background: radial-gradient(ellipse 60% 50% at 85% 100%, rgba(255,107,107,0.06) 0%, transparent 60%); opacity: 0.5; }
+
+#back-to-top {
+  position: fixed; bottom: 32px; right: 32px; z-index: 50;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--elevated); border: 1px solid var(--border); color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: translateY(20px) scale(0.9); pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--glass-shadow);
+  cursor: pointer;
+}
+#back-to-top.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+#back-to-top:hover { color: var(--bg); background: var(--text); border-color: var(--text); }
+
+.pulse-dot { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--primary-glow); }
+  50% { opacity: 0.5; transform: scale(1.2); box-shadow: 0 0 0 8px transparent; }
+}
+
+.reveal { opacity: 0; transform: translateY(24px); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal.visible { opacity: 1; transform: none; }
+
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 4px; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .pulse-dot, #back-to-top { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; }
+  .glass:hover { transform: none !important; }
+}
 </style>
 </head>
-<body>
+<body class="min-h-dvh flex flex-col antialiased relative overflow-x-hidden selection:bg-[var(--primary-dim)] selection:text-text">
 
-<header class="container">
-  <img src="../assets/logo.svg" alt="SidecarPatcher" class="header-logo"/>
-  <h1>SidecarPatcher</h1>
-  <p class="subtitle">Experimental macOS internals hack — patch SidecarCore to re-enable Sidecar on unsupported hardware.</p>
-  <div class="badges">
-    <span class="badge hl">MIT</span>
-    <span class="badge">Python 3</span>
-    <span class="badge">macOS Sequoia</span>
-    <span class="badge warn">Prototype</span>
-  </div>
-</header>
+<div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+<div class="fixed inset-0 radial-1 pointer-events-none z-0 mix-blend-screen dark:mix-blend-screen"></div>
+<div class="fixed inset-0 radial-2 pointer-events-none z-0 mix-blend-screen dark:mix-blend-screen"></div>
 
-<div class="container">
-  <div class="code-window">
-    <div class="code-bar">
-      <span></span><span></span><span></span>
-      <span class="filename">sidecar_patcher.py</span>
-    </div>
-    <div class="code-body">
-      <span class="comment"># Byte signature of the compatibility check function</span><br/>
-      <span class="kw">SIGNATURE</span> = <span class="fn">bytes</span>([<br/>
-      &nbsp;&nbsp;<span class="hex">0x55</span>, <span class="hex">0x48</span>, <span class="hex">0x89</span>, <span class="hex">0xE5</span>, <span class="hex">0x41</span>, <span class="hex">0x57</span>, <span class="hex">0x41</span>, <span class="hex">0x56</span>,<br/>
-      &nbsp;&nbsp;<span class="hex">0x41</span>, <span class="hex">0x55</span>, <span class="hex">0x41</span>, <span class="hex">0x54</span>, <span class="hex">0x53</span>, <span class="hex">0x48</span>, <span class="hex">0x83</span>, <span class="hex">0xEC</span>,<br/>
-      &nbsp;&nbsp;<span class="hex">0x38</span>, <span class="comment"># ...</span><br/>
-      ])<br/><br/>
-      <span class="comment"># Found at 0x10003e7f0 in SidecarCore (Sequoia 15.6)</span><br/>
-      <span class="comment"># Patched to always return 1 (compatible)</span>
-    </div>
-  </div>
-</div>
+<!-- @section nav -->
+<nav class="sticky top-0 z-50 bg-bg/70 backdrop-blur-xl border-b border-border/50 py-3 px-6 transition-colors duration-300">
+  <div class="w-full max-w-container mx-auto flex items-center justify-between gap-4">
+    <a href="https://github.com/Sofian-bll/SidecarPatcher" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 group shrink-0">
+      <div class="text-text group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
+        <img src="assets/logo.png" alt="Logo" class="w-10 h-10 rounded-lg">
+      </div>
+      <span class="font-bold text-[16px] whitespace-nowrap text-text group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent transition-all">SidecarPatcher</span>
+    </a>
 
-<section class="container">
-  <h2>Status</h2>
-  <div class="status-grid">
-    <div class="status-card">
-      <span class="check">&check;</span> Binary extraction<br/>
-      <div class="label">SidecarCore from DYLD cache</div>
-    </div>
-    <div class="status-card">
-      <span class="check">&check;</span> Function identified<br/>
-      <div class="label">Via Hopper disassembler</div>
-    </div>
-    <div class="status-card">
-      <span class="cross">&cross;</span> Code signing<br/>
-      <div class="label">Modified binary signature unresolved</div>
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <a href="https://github.com/Sofian-bll/SidecarPatcher" target="_blank" rel="noopener noreferrer" class="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted hover:text-text transition-colors px-4 py-2 rounded-full border border-border bg-surface hover:border-[var(--primary-dim)] hover:bg-elevated">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        GitHub
+      </a>
+
+      <div class="scale-90 sm:scale-100"><span class="flex items-center gap-1.5 text-xs font-mono text-primary border border-primary/30 px-3 py-1.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-primary pulse-dot"></span>v1.0.0</span></div>
+
+      <button id="theme-toggle" class="p-2.5 rounded-full hover:bg-elevated border border-transparent hover:border-border transition-all text-muted hover:text-text" aria-label="Toggle theme">
+        <svg id="sun-icon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="moon-icon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
     </div>
   </div>
-  <p style="color:var(--muted);font-size:0.85rem;margin-top:16px;">For a working solution, see <a href="https://github.com/acidanthera/FeatureUnlock">FeatureUnlock</a> or <a href="https://github.com/ben-z/free-sidecar">free-sidecar</a>.</p>
+</nav>
+<!-- /@section nav -->
+
+<main class="flex-1 relative z-10">
+
+<!-- ============================================================ -->
+<!-- HERO — centered (default: CLI / lib / docs, no screenshot)   -->
+<!-- ============================================================ -->
+
+<!-- @section hero-centered -->
+<section class="relative py-[var(--section-py)]">
+  <div class="w-full max-w-container mx-auto px-6">
+    <div class="text-center flex flex-col items-center reveal">
+
+      <div class="flex items-center gap-2 text-primary uppercase tracking-[0.2em] text-[11px] font-bold mb-8 px-4 py-1.5 rounded-full border border-[var(--primary-dim)] bg-[var(--primary-dimmer)] backdrop-blur-sm">
+        <span class="w-1.5 h-1.5 bg-primary rounded-full pulse-dot"></span>
+        Python CLI Tool
+      </div>
+
+      <h1 class="headline text-5xl md:text-7xl lg:text-8xl font-extrabold leading-[1.15] mb-8 max-w-4xl text-gradient">
+        SidecarPatcher
+      </h1>
+
+      <p class="text-muted text-lg md:text-xl max-w-2xl leading-relaxed mb-12 font-medium">
+        Prototype experimental de reactivation de Sidecar sur Mac et iPad non supportes.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-4 mb-16 w-full sm:w-auto">
+        <a href="#quick-start" class="px-8 py-3.5 rounded-full font-bold text-sm text-[var(--bg)] bg-[var(--text)] hover:scale-105 shadow-xl hover:shadow-[0_0_30px_var(--primary-glow)] transition-all flex items-center justify-center gap-2">
+          Get Started
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+        <a href="https://github.com/Sofian-bll/SidecarPatcher" target="_blank" rel="noopener noreferrer" class="glass px-8 py-3.5 !rounded-full font-bold text-sm text-text hover:bg-elevated transition-colors flex items-center justify-center gap-2">
+          View on GitHub
+        </a>
+      </div>
+
+      <div class="w-full">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-3xl mx-auto pt-12 reveal visible" style="transition-delay:.15s">
+<div class="glass rounded-xl p-4 flex items-center gap-3 text-left">
+          <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm"><span class="font-bold text-lg text-primary leading-tight">218</span> <span class="font-semibold text-text">Lines of Python</span></div>
+            <div class="text-[11px] text-muted mt-0.5 leading-tight">stdlib only</div>
+          </div>
+        </div>
+<div class="glass rounded-xl p-4 flex items-center gap-3 text-left">
+          <div class="w-9 h-9 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm"><span class="font-bold text-lg text-secondary leading-tight">0</span> <span class="font-semibold text-text">Dependencies</span></div>
+            <div class="text-[11px] text-muted mt-0.5 leading-tight">zero pip install</div>
+          </div>
+        </div>
+<div class="glass rounded-xl p-4 flex items-center gap-3 text-left">
+          <div class="w-9 h-9 rounded-lg bg-accent/10 text-accent flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm"><span class="font-bold text-lg text-accent leading-tight">5</span> <span class="font-semibold text-text">CLI Options</span></div>
+            <div class="text-[11px] text-muted mt-0.5 leading-tight">argparse flags</div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div class="mt-16 w-full max-w-5xl mx-auto animate-float">
+        
+      </div>
+
+    </div>
+  </div>
 </section>
+<!-- /@section hero-centered -->
 
-<section class="container">
-  <h2>Structure</h2>
-  <table class="struct-table">
-    <tr><td>sidecar_patcher.py</td><td>Main patching script</td></tr>
-    <tr><td>docs/RECHERCHE.md</td><td>Research journal &amp; technical deep dive</td></tr>
-    <tr><td>docs/INSTALLATION.md</td><td>Setup guide &amp; prerequisites</td></tr>
-    <tr><td>docs/COMMANDES.md</td><td>Command reference</td></tr>
-  </table>
+<!-- ============================================================ -->
+<!-- HERO — with screenshot (web apps)                            -->
+<!-- ============================================================ -->
+
+
+<!-- ============================================================ -->
+<!-- STORY — glass cards with connector dots                      -->
+<!-- ============================================================ -->
+
+<!-- @section story-horizontal -->
+<section class="py-[var(--section-py)] relative">
+  <div class="w-full max-w-container mx-auto px-6">
+    <div class="text-center max-w-container-sm mx-auto mb-20 reveal">
+      <h2 class="headline text-3xl md:text-5xl font-bold mb-6 tracking-tight">Project Evolution</h2>
+      <div class="text-muted text-lg leading-relaxed"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto relative">
+      <div class="hidden md:block absolute top-1/2 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-border to-transparent -translate-y-1/2 z-[-1]"></div>
+            <div class="reveal visible glass rounded-2xl p-6 flex flex-col" style="transition-delay:0.0s">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-[10px] font-mono font-bold uppercase tracking-wider border border-primary/40 text-primary px-2 py-0.5 rounded-full">v1.0.0</span>
+          <span class="text-[10px] font-mono font-bold tracking-wider text-muted uppercase">Initial Release</span>
+        </div>
+        <p class="text-sm text-muted leading-relaxed mb-4 flex-1">Automated signature scanning, flexible offsets, backup safety, NOP padding.</p>
+        
+      </div>
+      <div class="reveal visible glass rounded-2xl p-6 flex flex-col" style="transition-delay:0.1s">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-[10px] font-mono font-bold uppercase tracking-wider border border-primary/40 text-primary px-2 py-0.5 rounded-full">v0.0.1-alpha</span>
+          <span class="text-[10px] font-mono font-bold tracking-wider text-muted uppercase">Research Phase</span>
+        </div>
+        <p class="text-sm text-muted leading-relaxed mb-4 flex-1">Binary extraction, Hopper analysis, first manual patch.</p>
+        
+      </div>
+    </div>
+  </div>
 </section>
+<!-- /@section story-horizontal -->
 
-<footer>
-  <p>MIT &copy; 2026 Sofian &middot; <a href="https://github.com/Sofian-bll/SidecarPatcher">GitHub</a></p>
+
+<!-- ============================================================ -->
+<!-- FEATURES — glass cards with colored icon containers          -->
+<!-- ============================================================ -->
+
+<!-- @section features -->
+<section class="py-[var(--section-py)] relative">
+  <div class="w-full max-w-container mx-auto px-6">
+    <div class="text-center max-w-container-sm mx-auto mb-20 reveal">
+      <h2 class="headline text-3xl md:text-5xl font-bold mb-6 tracking-tight">Features</h2>
+      <div class="text-muted text-lg leading-relaxed"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="reveal visible glass rounded-2xl p-8 flex flex-col gap-4" style="transition-delay:0.0s">
+        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+        <h3 class="font-bold text-lg">Signature Scanning</h3>
+        <p class="text-muted text-sm leading-relaxed">Automatically locates the compatibility check function in SidecarCore via binary pattern matching.</p>
+      </div>
+      <div class="reveal visible glass rounded-2xl p-8 flex flex-col gap-4" style="transition-delay:0.1s">
+        <div class="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+        <h3 class="font-bold text-lg">Flexible Offsets</h3>
+        <p class="text-muted text-sm leading-relaxed">Supports automatic detection or manual override via --force-offset (decimal or hex).</p>
+      </div>
+      <div class="reveal visible glass rounded-2xl p-8 flex flex-col gap-4" style="transition-delay:0.2s">
+        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h3 class="font-bold text-lg">Backup Safety</h3>
+        <p class="text-muted text-sm leading-relaxed">Creates automatic .bak backups before overwriting the original binary.</p>
+      </div>
+      <div class="reveal visible glass rounded-2xl p-8 flex flex-col gap-4" style="transition-delay:0.3s">
+        <div class="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+        <h3 class="font-bold text-lg">NOP Padding</h3>
+        <p class="text-muted text-sm leading-relaxed">Configurable NOP instruction padding with --nop-count for binary alignment.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /@section features -->
+
+<!-- ============================================================ -->
+<!-- QUICK START — CLI tool (macOS terminal panels)               -->
+<!-- ============================================================ -->
+
+<!-- @section quick-cli -->
+<section id="quick-start" class="py-[var(--section-py)]">
+  <div class="w-full max-w-container mx-auto px-6">
+    <div class="text-center max-w-container-sm mx-auto mb-16 reveal">
+      <h2 class="headline text-3xl md:text-5xl font-bold mb-6 tracking-tight">Quick Start</h2>
+      <div class="text-muted text-lg"><p class="text-muted">Clone, patch, run. Zero dependencies.</p></div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div class="reveal visible glass rounded-2xl overflow-hidden flex flex-col group" style="transition-delay:0.0s">
+        <div class="flex items-center gap-1.5 px-4 py-3 bg-surface border-b border-white/5 rounded-t-2xl">
+          <div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+          <span class="text-[10px] text-muted ml-2 font-mono uppercase tracking-wider">Setup & Patch</span>
+          <button class="ml-auto text-muted hover:text-primary transition-colors p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" aria-label="Copy" data-copy="setup">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <pre id="code-setup" class="p-6 text-sm text-text leading-relaxed whitespace-pre-wrap overflow-x-hidden"><code class="text-accent">git clone https://github.com/Sofian-bll/SidecarPatcher.git</code>
+<code class="text-accent">cd SidecarPatcher</code>
+<span class="text-muted">Auto-detect & patch</span>
+<code class="text-primary">python3 sidecar_patcher.py SidecarCore</code></pre>
+      </div>
+      <div class="reveal visible glass rounded-2xl overflow-hidden flex flex-col group" style="transition-delay:0.1s">
+        <div class="flex items-center gap-1.5 px-4 py-3 bg-surface border-b border-white/5 rounded-t-2xl">
+          <div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+          <span class="text-[10px] text-muted ml-2 font-mono uppercase tracking-wider">Advanced Usage</span>
+          <button class="ml-auto text-muted hover:text-primary transition-colors p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" aria-label="Copy" data-copy="usage">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <pre id="code-usage" class="p-6 text-sm text-text leading-relaxed whitespace-pre-wrap overflow-x-hidden"><span class="text-muted">Manual offset</span>
+<code class="text-accent">python3 sidecar_patcher.py SidecarCore --force-offset 0x3A2C</code>
+<span class="text-muted">Custom output & padding</span>
+<code class="text-primary">python3 sidecar_patcher.py SidecarCore -o /tmp/out --nop-count 5</code>
+<span class="text-muted">Skip auto-backup</span>
+<code class="text-accent">python3 sidecar_patcher.py SidecarCore --no-backup</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /@section quick-cli -->
+
+<!-- ============================================================ -->
+<!-- QUICK START — web app (setup + .env panels)                  -->
+<!-- ============================================================ -->
+
+
+<!-- ============================================================ -->
+<!-- DEMO — screenshot or video embed                             -->
+<!-- ============================================================ -->
+
+
+<!-- ============================================================ -->
+<!-- FAQ — details/summary elements                               -->
+<!-- ============================================================ -->
+
+
+<!-- ============================================================ -->
+<!-- ARCHITECTURE — stacked cards with CSS connectors             -->
+<!-- ============================================================ -->
+
+<!-- @section architecture -->
+<section class="py-[var(--section-py)]">
+  <div class="w-full max-w-container mx-auto px-6">
+    <div class="text-center max-w-container-sm mx-auto mb-16 reveal">
+      <h2 class="headline text-3xl md:text-5xl font-bold mb-6 tracking-tight">Architecture</h2>
+      <div class="text-muted text-lg"><p class="text-muted">Project structure at a glance.</p></div>
+    </div>
+    <div class="reveal max-w-3xl mx-auto" style="transition-delay:.1s">
+      <div class="glass overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-4 bg-elevated border-b border-border/50">
+          <div class="w-3 h-3 rounded-full bg-[#ff5f56] shadow-sm"></div>
+          <div class="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-sm"></div>
+          <div class="w-3 h-3 rounded-full bg-[#27c93f] shadow-sm"></div>
+          <span class="text-xs text-muted ml-3 font-mono font-medium tracking-wider select-none">project-architecture</span>
+        </div>
+        <div class="p-6 bg-[#09090b] dark:bg-transparent overflow-x-auto">
+          <pre class="font-mono text-sm leading-loose text-gray-300">SidecarPatcher/
+├── .gitattributes
+├── .gitignore
+├── LICENSE
+├── README.en.md
+├── README.md
+├── assets/
+│ └── logo.svg
+├── docs/
+│ ├── COMMANDES.md
+│ ├── INSTALLATION.md
+│ ├── RECHERCHE.md
+│ └── assets/
+└── sidecar_patcher.py</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /@section architecture -->
+
+</main>
+
+<!-- ============================================================ -->
+<!-- FOOTER — clean, minimal                                      -->
+<!-- ============================================================ -->
+
+<!-- @section footer -->
+<footer class="py-6 px-6">
+  <div class="w-full max-w-container mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="flex flex-col items-center md:items-start gap-1 text-xs text-muted">
+      <div class="font-semibold text-text">
+        SidecarPatcher
+      </div>
+      <div>MIT License &copy; 2026 Sofian</div>
+    </div>
+    <div class="flex items-center gap-4 text-sm font-medium text-muted">
+      <a href="https://www.python.org/" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/python-3670A0?style=flat&logo=python&logoColor=ffdd54" alt="Python" class="h-5"></a>
+    </div>
+  </div>
 </footer>
+<!-- /@section footer -->
+
+<button id="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+</button>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS (fixed, never change)                                -->
+<!-- ============================================================ -->
+
+<script>
+// Theme toggle
+(function() {
+  var toggle = document.getElementById('theme-toggle');
+  var sun = document.getElementById('sun-icon');
+  var moon = document.getElementById('moon-icon');
+  var html = document.documentElement;
+
+  function setTheme(l) {
+    if (l) { html.classList.add('light'); sun.classList.remove('hidden'); moon.classList.add('hidden'); }
+    else   { html.classList.remove('light'); sun.classList.add('hidden'); moon.classList.remove('hidden'); }
+  }
+
+  var s = localStorage.getItem('theme');
+  setTheme(s === 'light');
+
+  if (toggle) {
+    toggle.addEventListener('click', function() {
+      var isLight = !html.classList.contains('light');
+      setTheme(isLight);
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+  }
+})();
+
+// Scroll reveal
+(function() {
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+  document.querySelectorAll('.reveal').forEach(function(el) { obs.observe(el); });
+})();
+</script>
+
+<script>
+// Copy to clipboard
+document.querySelectorAll('[data-copy]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var id = this.getAttribute('data-copy');
+    var el = document.getElementById('code-' + id);
+    if (!el) return;
+    var txt = el.textContent.trim();
+    navigator.clipboard.writeText(txt).then(function() {
+      var origHTML = btn.innerHTML;
+      btn.innerHTML = '<span class="text-primary text-[11px] font-bold uppercase tracking-wider">Copied!</span>';
+      setTimeout(function() { btn.innerHTML = origHTML; }, 2000);
+    }).catch(function() {});
+  });
+});
+</script>
+
+
+
+<script>
+// Back to top
+document.addEventListener('DOMContentLoaded', function() {
+  var btt = document.getElementById('back-to-top');
+  if (!btt) return;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 500) btt.classList.add('visible');
+    else btt.classList.remove('visible');
+  }, {passive: true});
+});
+</script>
 
 </body>
 </html>
